@@ -1,0 +1,68 @@
+/* Custom CSS for the dedicated landing page flow section */
+
+.hero-logo-bg {
+    background: radial-gradient(circle at 50% 50%, rgba(13, 110, 253, 0.08) 0%, transparent 60%);
+}
+
+/* Match the inspiration diagram's background style */
+.how-it-works-bg {
+    background-color: #080a10; /* Very dark blue-black */
+}
+
+/* Background for descriptive boxes */
+.bg-dark-card {
+    background-color: #0b1118;
+}
+
+/* Stylized numbered list */
+.how-it-works-list {
+    counter-reset: vp-counter;
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.how-it-works-list li {
+    position: relative;
+    padding-left: 4rem;
+    padding-bottom: 2rem;
+    font-size: 1.1rem;
+    color: #a0a0a0; /* text-muted */
+}
+
+/* Line connecting the numbers */
+.how-it-works-list li::before {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    top: 3rem;
+    height: calc(100% + 2rem);
+    width: 2px;
+    background-color: rgba(13, 110, 253, 0.15); /* primary border-opacity */
+    z-index: 0;
+}
+
+/* Make the last line disappear */
+.how-it-works-list li:last-child::before {
+    display: none;
+}
+
+/* The numbered circles */
+.how-it-works-list li::after {
+    counter-increment: vp-counter;
+    content: counter(vp-counter);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background-color: #0d6efd; /* primary */
+    color: white;
+    font-weight: bold;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+    z-index: 1;
+}
