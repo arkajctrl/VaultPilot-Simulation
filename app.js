@@ -3,6 +3,10 @@ let currentUser = null;
 let userData = {};
 let growthInterval;
 
+// NEW: Tracker to handle the animation engine smoothly
+let currentDisplayedBalance = 0; 
+let balanceAnimationId = null;
+
 // Default profile
 const defaultUserData = {
     password: "", 
@@ -37,7 +41,6 @@ const depositInput = document.getElementById('deposit-amount');
 const riskBtn = document.getElementById('risk-btn');
 const darkModeBtn = document.getElementById('dark-mode-toggle');
 
-// Strategy & Chart Elements
 const strategySlider = document.getElementById('strategy-slider');
 const strategyBadge = document.getElementById('strategy-badge');
 const tabAllocation = document.getElementById('tab-allocation');
@@ -45,7 +48,6 @@ const tabPerformance = document.getElementById('tab-performance');
 const donutCanvas = document.getElementById('portfolioChart');
 const lineCanvas = document.getElementById('performanceChart');
 
-// Ticker Element
 const cryptoTicker = document.getElementById('crypto-ticker');
 
 // --- CHART TABS LOGIC ---
@@ -131,6 +133,33 @@ function formatCurrency(amount) {
     return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// --- NEW: THE NUMBER ANIMATION ENGINE ---
+function animateBalance(obj, start, end, duration) {
+    if (balanceAnimationId) cancelAnimationFrame(balanceAnimationId); // Prevent overlapping glitches
+    
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        
+        // Calculate how far along we are (0.0 to 1.0)
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        
+        // Add a smooth easing curve so it slows down as it approaches the end
+        const easeOutCurve = 1 - Math.pow(1 - progress, 3); 
+        const currentVal = start + (easeOutCurve * (end - start));
+        
+        obj.innerText = formatCurrency(currentVal);
+        
+        if (progress < 1) {
+            balanceAnimationId = requestAnimationFrame(step);
+        } else {
+            // Force the exact final number to fix trailing decimals
+            obj.innerText = formatCurrency(end); 
+        }
+    };
+    balanceAnimationId = requestAnimationFrame(step);
+}
+
 function generateMockHistory(currentBalance) {
     let hist = [];
     let val = currentBalance * 0.7; 
@@ -187,7 +216,14 @@ function updateStrategyUI(level) {
 function renderUI() {
     updateStrategyUI(userData.strategyLevel);
 
-    balanceElement.innerText = formatCurrency(userData.balance);
+    // Trigger the animation if the balance changed
+    if (currentDisplayedBalance !== userData.balance) {
+        // Run a fast animation for background growth, slower animation for big deposits
+        const animSpeed = Math.abs(userData.balance - currentDisplayedBalance) > 100 ? 1000 : 400; 
+        animateBalance(balanceElement, currentDisplayedBalance, userData.balance, animSpeed);
+        currentDisplayedBalance = userData.balance;
+    }
+
     growthElement.innerText = `+${userData.baseApy.toFixed(2)}% simulated APY`;
     if (userData.baseApy > 15) growthElement.className = 'fw-bold mb-4 text-danger';
     else if (userData.baseApy < 5) growthElement.className = 'fw-bold mb-4 text-warning';
@@ -252,17 +288,12 @@ function simulateGrowth() {
     }
 }
 
-// --- NEW: LIVE CRYPTO DATA FETCHING ---
 async function fetchLiveCryptoPrices() {
     try {
-        // Ping CoinGecko public API for live data in INR
         const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr&include_24hr_change=true');
-        
         if (!response.ok) throw new Error("API Rate Limit Reached");
-        
         const data = await response.json();
 
-        // Helper to format the coin string with colors based on performance
         const formatCoin = (symbol, dataObj) => {
             const price = dataObj.inr.toLocaleString('en-IN');
             const change = dataObj.inr_24h_change.toFixed(2);
@@ -280,7 +311,6 @@ async function fetchLiveCryptoPrices() {
         `;
     } catch (error) {
         console.warn("Using fallback market data to prevent UI breakage.");
-        // Fallback data just in case the API blocks the browser request
         cryptoTicker.innerHTML = `
             <span class="me-3">BTC <span style="color: var(--bs-body-color);">₹54,23,100</span> <span class="text-success ms-1">▲ 2.45%</span></span>
             <span class="text-muted opacity-50 me-3">|</span>
@@ -306,7 +336,6 @@ loginBtn.addEventListener('click', () => {
     }
 
     const savedAccountData = localStorage.getItem('vp_user_' + userVal);
-    
     if (savedAccountData) {
         const parsedAccount = JSON.parse(savedAccountData);
         if (parsedAccount.password && parsedAccount.password !== passVal) {
@@ -323,9 +352,12 @@ loginBtn.addEventListener('click', () => {
         displayUsername.innerText = userVal.charAt(0).toUpperCase() + userVal.slice(1);
         
         loadState(currentUser, passVal);
+        
+        // Start the animation engine at 0 when they log in so it counts up beautifully
+        currentDisplayedBalance = 0;
+        balanceElement.innerText = formatCurrency(0);
+        
         renderUI();
-
-        // Fetch the live crypto prices as soon as they log in
         fetchLiveCryptoPrices();
 
         strategySlider.removeAttribute('disabled');
@@ -350,6 +382,10 @@ logoutBtn.addEventListener('click', () => {
     clearInterval(growthInterval);
     currentUser = null;
     
+    // Reset the animation engine
+    if (balanceAnimationId) cancelAnimationFrame(balanceAnimationId);
+    currentDisplayedBalance = 0;
+    
     usernameInput.value = '';
     passwordInput.value = '';
     strategySlider.setAttribute('disabled', 'true');
@@ -360,7 +396,6 @@ logoutBtn.addEventListener('click', () => {
     appView.classList.add('d-none');
     loginView.classList.replace('d-none', 'd-flex');
     
-    // Clear the ticker for the next login
     cryptoTicker.innerHTML = '<span class="text-muted">Establishing secure API connection...</span>';
 });
 
