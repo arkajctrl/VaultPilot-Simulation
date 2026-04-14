@@ -1,28 +1,29 @@
-// VaultPilot - AI Frontend Linked to Gemini Backend
-
 let balance = 10000.00;
 let baseApy = 8.5; 
+let growthInterval;
 
 const balanceElement = document.getElementById('total-balance');
 const growthElement = document.getElementById('growth-rate');
 const aiLogsElement = document.getElementById('ai-logs');
 const depositBtn = document.getElementById('deposit-btn');
+const depositInput = document.getElementById('deposit-amount');
 const riskBtn = document.getElementById('risk-btn');
 const darkModeBtn = document.getElementById('dark-mode-toggle');
 
+// State Elements
+const connectOverlay = document.getElementById('wallet-overlay');
+const connectBtn = document.getElementById('connect-wallet-btn');
+const appContent = document.getElementById('app-content');
+const chartOverlay = document.getElementById('chart-overlay');
+const txBody = document.getElementById('tx-body');
+
 // --- DARK MODE TOGGLE ---
-let isDark = false;
+let isDark = true; 
 
 darkModeBtn.addEventListener('click', () => {
     isDark = !isDark;
-    
-    // 1. Tell Bootstrap to switch themes
     document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
-    
-    // 2. Change the button icon
     darkModeBtn.innerText = isDark ? '☀️' : '🌙';
-
-    // 3. Update Chart.js text colors so they stay readable
     portfolioChart.options.plugins.legend.labels.color = isDark ? '#ffffff' : '#666';
     portfolioChart.update();
 });
@@ -34,25 +35,21 @@ let portfolioChart = new Chart(ctx, {
     data: {
         labels: ['Lending Pools', 'Liquidity Farming', 'Emergency Reserves'],
         datasets: [{
-            data: [60, 30, 10], // Starting allocation
-            backgroundColor: ['#0d6efd', '#0dcaf0', '#6c757d'], // Blue, Light Blue, Grey
+            data: [60, 30, 10], 
+            backgroundColor: ['#0d6efd', '#0dcaf0', '#6c757d'],
             borderWidth: 0
         }]
     },
     options: {
         responsive: true,
-        cutout: '75%', // Makes the ring thinner and more modern
+        cutout: '75%', 
         plugins: {
-            legend: { 
-                position: 'bottom',
-                labels: {
-                    color: '#666' // Default light mode color
-                }
-            }
+            legend: { position: 'bottom', labels: { color: '#ffffff' } }
         }
     }
 });
 
+// --- UTILITY FUNCTIONS ---
 function formatCurrency(amount) {
     return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -66,24 +63,88 @@ function addLog(message, isWarning = false) {
     aiLogsElement.scrollTop = aiLogsElement.scrollHeight; 
 }
 
+function addTxRow(type, action, statusClass, statusText) {
+    if (txBody.innerHTML.includes("No recent transactions")) {
+        txBody.innerHTML = '';
+    }
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td class="fw-bold text-${type === 'Deposit' ? 'success' : 'primary'}">${type}</td>
+        <td>${action}</td>
+        <td class="text-end"><span class="status-badge bg-${statusClass} bg-opacity-25 text-${statusClass}">${statusText}</span></td>
+    `;
+    txBody.prepend(tr);
+}
+
 function simulateGrowth() {
     const growthAmount = balance * (baseApy / 100) / 365 / 24 / 60; 
     balance += growthAmount;
     balanceElement.innerText = formatCurrency(balance);
 }
 
-balanceElement.innerText = formatCurrency(balance);
-growthElement.innerText = `+${baseApy.toFixed(2)}% simulated APY`;
-setInterval(simulateGrowth, 2000);
+// --- CORE LOGIC & FLOW ---
 
-depositBtn.addEventListener('click', () => {
-    balance += 1000;
-    balanceElement.innerText = formatCurrency(balance);
-    addLog("User deposited ₹1,000.00");
-    addLog("Funds successfully routed to optimal pools.");
+// 1. Wallet Connection Flow
+connectBtn.addEventListener('click', () => {
+    connectBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Connecting...';
+    
+    setTimeout(() => {
+        // Unlock UI & Destroy the invisible shield
+        connectOverlay.style.opacity = '0';
+        connectOverlay.style.pointerEvents = 'none';
+        
+        appContent.classList.remove('blurred-state');
+        appContent.style.pointerEvents = 'auto'; 
+        
+        chartOverlay.style.filter = 'none';
+        chartOverlay.style.opacity = '1';
+        
+        // UNLOCK ALL BUTTONS AND INPUT
+        depositBtn.removeAttribute('disabled');
+        depositInput.removeAttribute('disabled');
+        riskBtn.removeAttribute('disabled');
+
+        // Nuke the overlay entirely
+        setTimeout(() => connectOverlay.remove(), 400);
+
+        // Initialize Data
+        aiLogsElement.innerHTML = ''; 
+        addLog("VaultPilot AI initialized...");
+        addLog("Wallet connected: 0x7F8...3aB9");
+        addLog("Scanning DeFi liquidity pools...");
+        
+        balanceElement.innerText = formatCurrency(balance);
+        growthElement.innerText = `+${baseApy.toFixed(2)}% simulated APY`;
+        
+        growthInterval = setInterval(simulateGrowth, 2000);
+    }, 1500); 
 });
 
-// --- THE REAL AI CONNECTION ---
+// 2. Dynamic Deposit Flow
+depositBtn.addEventListener('click', () => {
+    // Read and parse the input value
+    const amountToDeposit = parseFloat(depositInput.value);
+
+    // Validate the input
+    if (isNaN(amountToDeposit) || amountToDeposit <= 0) {
+        addLog("❌ Deposit failed: Please enter a valid amount.", true);
+        return;
+    }
+
+    balance += amountToDeposit;
+    balanceElement.innerText = formatCurrency(balance);
+    
+    // Format for logs
+    const formattedAmount = formatCurrency(amountToDeposit);
+    
+    addLog(`User deposited ${formattedAmount}`);
+    addTxRow("Deposit", `+${formattedAmount} to Smart Contract`, "success", "Completed");
+    
+    // Optional: Clear the input after deposit
+    depositInput.value = '';
+});
+
+// 3. AI Risk Mitigation Flow
 riskBtn.addEventListener('click', async () => {
     addLog("⚠️ ALERT: High volatility detected in Liquidity Farming pools!", true);
     addLog("Contacting Gemini AI for emergency reallocation...", false);
@@ -101,27 +162,19 @@ riskBtn.addEventListener('click', async () => {
         const aiDecision = await response.json();
         addLog(aiDecision.explanation, true);
         
-        // --- UPDATE THE CHART SMOOTHLY ---
-        // 1. Change the numbers
-        portfolioChart.data.datasets[0].data = [
-            aiDecision.lending_pool, 
-            aiDecision.liquidity_farming, 
-            aiDecision.emergency_reserves
-        ];
-        
-        // 2. Change the colors to show "Safety Mode" (Green, Red, Grey)
+        portfolioChart.data.datasets[0].data = [aiDecision.lending_pool, aiDecision.liquidity_farming, aiDecision.emergency_reserves];
         portfolioChart.data.datasets[0].backgroundColor = ['#198754', '#dc3545', '#6c757d'];
-        
-        // 3. Trigger the animation
         portfolioChart.update();
 
-        // Lower the APY safely
         baseApy = 4.2; 
         growthElement.innerText = `+${baseApy.toFixed(2)}% simulated APY`;
         growthElement.classList.replace('text-success', 'text-warning');
 
+        addTxRow("AI Action", "Emergency Rebalance Triggered", "warning", "Executed");
+
     } catch (error) {
         addLog("❌ API Error: Could not reach Gemini.", true);
+        addTxRow("AI Action", "Rebalance Failed (Node Error)", "danger", "Failed");
         console.error(error);
     } finally {
         riskBtn.disabled = false;
