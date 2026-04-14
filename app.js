@@ -2,12 +2,9 @@
 let currentUser = null;
 let userData = {};
 let growthInterval;
-
-// NEW: Tracker to handle the animation engine smoothly
 let currentDisplayedBalance = 0; 
 let balanceAnimationId = null;
 
-// Default profile
 const defaultUserData = {
     password: "", 
     balance: 0,
@@ -49,6 +46,9 @@ const donutCanvas = document.getElementById('portfolioChart');
 const lineCanvas = document.getElementById('performanceChart');
 
 const cryptoTicker = document.getElementById('crypto-ticker');
+
+// NEW: PDF Button
+const downloadPdfBtn = document.getElementById('download-pdf-btn');
 
 // --- CHART TABS LOGIC ---
 tabAllocation.addEventListener('click', () => {
@@ -133,18 +133,13 @@ function formatCurrency(amount) {
     return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// --- NEW: THE NUMBER ANIMATION ENGINE ---
 function animateBalance(obj, start, end, duration) {
-    if (balanceAnimationId) cancelAnimationFrame(balanceAnimationId); // Prevent overlapping glitches
+    if (balanceAnimationId) cancelAnimationFrame(balanceAnimationId); 
     
     let startTimestamp = null;
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
-        
-        // Calculate how far along we are (0.0 to 1.0)
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        
-        // Add a smooth easing curve so it slows down as it approaches the end
         const easeOutCurve = 1 - Math.pow(1 - progress, 3); 
         const currentVal = start + (easeOutCurve * (end - start));
         
@@ -153,7 +148,6 @@ function animateBalance(obj, start, end, duration) {
         if (progress < 1) {
             balanceAnimationId = requestAnimationFrame(step);
         } else {
-            // Force the exact final number to fix trailing decimals
             obj.innerText = formatCurrency(end); 
         }
     };
@@ -216,9 +210,7 @@ function updateStrategyUI(level) {
 function renderUI() {
     updateStrategyUI(userData.strategyLevel);
 
-    // Trigger the animation if the balance changed
     if (currentDisplayedBalance !== userData.balance) {
-        // Run a fast animation for background growth, slower animation for big deposits
         const animSpeed = Math.abs(userData.balance - currentDisplayedBalance) > 100 ? 1000 : 400; 
         animateBalance(balanceElement, currentDisplayedBalance, userData.balance, animSpeed);
         currentDisplayedBalance = userData.balance;
@@ -310,7 +302,6 @@ async function fetchLiveCryptoPrices() {
             ${formatCoin('SOL', data.solana)}
         `;
     } catch (error) {
-        console.warn("Using fallback market data to prevent UI breakage.");
         cryptoTicker.innerHTML = `
             <span class="me-3">BTC <span style="color: var(--bs-body-color);">₹54,23,100</span> <span class="text-success ms-1">▲ 2.45%</span></span>
             <span class="text-muted opacity-50 me-3">|</span>
@@ -353,7 +344,6 @@ loginBtn.addEventListener('click', () => {
         
         loadState(currentUser, passVal);
         
-        // Start the animation engine at 0 when they log in so it counts up beautifully
         currentDisplayedBalance = 0;
         balanceElement.innerText = formatCurrency(0);
         
@@ -382,7 +372,6 @@ logoutBtn.addEventListener('click', () => {
     clearInterval(growthInterval);
     currentUser = null;
     
-    // Reset the animation engine
     if (balanceAnimationId) cancelAnimationFrame(balanceAnimationId);
     currentDisplayedBalance = 0;
     
@@ -464,4 +453,54 @@ riskBtn.addEventListener('click', () => {
         
         riskBtn.disabled = false;
     }, 1500);
+});
+
+// --- NEW: PDF STATEMENT GENERATOR ---
+downloadPdfBtn.addEventListener('click', () => {
+    if (!currentUser || userData.transactions.length === 0) {
+        addLogAndSave("❌ PDF Error: No transactions to generate.", true);
+        return;
+    }
+
+    addLogAndSave("Generating encrypted PDF statement...");
+
+    // Initialize jsPDF from the CDN
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Build Document Header
+    doc.setFontSize(22);
+    doc.setTextColor(13, 110, 253); 
+    doc.text("VaultPilot.", 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text("AI-Powered Financial Autopilot", 14, 28);
+    doc.text(`Account Holder: ${displayUsername.innerText}`, 14, 38);
+    doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, 14, 44);
+    doc.text(`Closing Balance: ${formatCurrency(userData.balance)}`, 14, 50);
+
+    // Format Table Data
+    const tableColumn = ["Type", "Action", "Status"];
+    const tableRows = [];
+
+    userData.transactions.forEach(tx => {
+        tableRows.push([tx.type, tx.action, tx.statusText]);
+    });
+
+    // Draw the Table using the AutoTable plugin
+    doc.autoTable({
+        startY: 60,
+        head: [tableColumn],
+        body: tableRows,
+        theme: 'striped',
+        headStyles: { fillColor: [15, 23, 42] }, // Dark slate to match your UI
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        margin: { top: 60 }
+    });
+
+    // Trigger File Download
+    const fileName = `VaultPilot_Statement_${currentUser}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    addLogAndSave("✅ Statement downloaded successfully.");
 });

@@ -92,7 +92,11 @@
 
                 <div class="card glass-card">
                     <div class="card-body p-4">
-                        <h6 class="text-uppercase text-muted fw-bold tracking-wide mb-3">Recent Transactions</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="text-uppercase text-muted fw-bold tracking-wide m-0">Recent Transactions</h6>
+                            <button id="download-pdf-btn" class="btn btn-sm btn-outline-primary" style="border-radius: 6px;">📄 PDF</button>
+                        </div>
+                        
                         <div class="table-responsive transaction-scroll">
                             <table class="table table-borderless text-nowrap mb-0 modern-table">
                                 <thead>
@@ -142,6 +146,9 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
 </body>
