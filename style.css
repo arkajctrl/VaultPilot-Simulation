@@ -75,7 +75,7 @@ body {
     opacity: 1;
 }
 
-/* --- SLEEK IDE TERMINAL (Console Aesthetic) --- */
+/* --- SLEEK IDE TERMINAL --- */
 #ai-logs {
     background: #1e1e2e !important; 
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -108,57 +108,68 @@ body {
     border-left: 2px solid #ffcb6b; 
 }
 
-/* --- UI STATE & ANIMATIONS --- */
-.pulse-dot {
-    display: inline-block;
-    width: 10px; height: 10px;
-    background-color: #0d6efd;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
+/* --- CHART UI TABS --- */
+.custom-tabs {
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 50rem;
+    padding: 4px;
+    display: inline-flex;
 }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+.custom-tabs .nav-link {
+    color: #6c757d;
+    border-radius: 50rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
-.glass-overlay {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: opacity 0.4s ease, visibility 0.4s ease;
+.custom-tabs .nav-link:hover { color: #0d6efd; }
+
+.custom-tabs .nav-link.active {
+    background: #0d6efd;
+    color: #fff !important;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
 }
 
-[data-bs-theme="dark"] .glass-overlay {
-    background: rgba(15, 23, 42, 0.4);
-}
-
-.blurred-state {
-    filter: blur(6px);
-    opacity: 0.4;
-    pointer-events: none;
-    transition: filter 0.5s ease, opacity 0.5s ease;
-}
-
-/* Custom Input Field Fixes for Light Mode */
-[data-bs-theme="light"] #deposit-amount {
+[data-bs-theme="light"] #deposit-amount,
+[data-bs-theme="light"] #username-input,
+[data-bs-theme="light"] #password-input {
     color: #0f172a !important;
 }
 
-/* --- TRANSACTION LEDGER TABLE WITH SCROLL FIX --- */
-.modern-table {
-    --bs-table-bg: transparent;
-    --bs-table-color: inherit;
+/* --- THE DEGEN SLIDER --- */
+.custom-range {
+    height: 6px;
+    background: rgba(13, 110, 253, 0.2);
+    border-radius: 10px;
+    appearance: none;
 }
 
+.custom-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #0d6efd;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.custom-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.custom-range.degen-mode::-webkit-slider-thumb {
+    background: #dc3545;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+}
+
+/* --- TRANSACTION LEDGER TABLE WITH SCROLL FIX --- */
+.modern-table { --bs-table-bg: transparent; --bs-table-color: inherit; }
 .modern-table th { font-weight: 600; letter-spacing: 0.5px; }
 .modern-table td { vertical-align: middle; font-size: 0.9rem; font-weight: 500; }
 .modern-table tbody tr { transition: background-color 0.2s ease; }
-.modern-table tbody tr:hover {
-    background-color: rgba(13, 110, 253, 0.05);
-    border-radius: 8px;
-}
+.modern-table tbody tr:hover { background-color: rgba(13, 110, 253, 0.05); border-radius: 8px; }
 
 .status-badge {
     padding: 0.35em 0.8em;
@@ -167,45 +178,14 @@ body {
     border-radius: 50rem;
 }
 
-/* Restrict the height and allow internal scrolling */
-.transaction-scroll {
-    max-height: 210px; 
-    overflow-y: auto;
-    border-radius: 8px; 
-}
-
-/* Create a premium Sticky Header */
+.transaction-scroll { max-height: 210px; overflow-y: auto; border-radius: 8px; }
 .modern-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 10; 
-    background: rgba(15, 23, 42, 0.85); 
-    backdrop-filter: blur(12px); 
+    position: sticky; top: 0; z-index: 10; 
+    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); 
 }
+[data-bs-theme="light"] .modern-table thead th { background: rgba(255, 255, 255, 0.85); }
 
-/* Light mode sticky header fallback */
-[data-bs-theme="light"] .modern-table thead th {
-    background: rgba(255, 255, 255, 0.85);
-}
-
-/* Optional: Make the scrollbar look sleek and modern */
-.transaction-scroll::-webkit-scrollbar,
-#ai-logs::-webkit-scrollbar {
-    width: 6px;
-}
-
-.transaction-scroll::-webkit-scrollbar-track,
-#ai-logs::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.transaction-scroll::-webkit-scrollbar-thumb,
-#ai-logs::-webkit-scrollbar-thumb {
-    background: rgba(13, 110, 253, 0.3);
-    border-radius: 10px;
-}
-
-.transaction-scroll::-webkit-scrollbar-thumb:hover,
-#ai-logs::-webkit-scrollbar-thumb:hover {
-    background: rgba(13, 110, 253, 0.6);
-}
+.transaction-scroll::-webkit-scrollbar, #ai-logs::-webkit-scrollbar { width: 6px; }
+.transaction-scroll::-webkit-scrollbar-track, #ai-logs::-webkit-scrollbar-track { background: transparent; }
+.transaction-scroll::-webkit-scrollbar-thumb, #ai-logs::-webkit-scrollbar-thumb { background: rgba(13, 110, 253, 0.3); border-radius: 10px; }
+.transaction-scroll::-webkit-scrollbar-thumb:hover, #ai-logs::-webkit-scrollbar-thumb:hover { background: rgba(13, 110, 253, 0.6); }

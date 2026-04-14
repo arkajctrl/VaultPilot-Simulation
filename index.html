@@ -13,29 +13,57 @@
 <body>
     <div class="bg-gradient-overlay"></div>
 
-    <div class="container mt-5 position-relative z-1">
-        <header class="mb-5 d-flex justify-content-between align-items-center">
+    <div id="login-view" class="container vh-100 d-flex align-items-center justify-content-center position-relative z-1">
+        <div class="card glass-card p-5 text-center shadow-lg" style="max-width: 400px; width: 100%;">
+            <div class="mb-4">
+                <h1 class="display-5 fw-bolder text-primary tracking-tight mb-0">VaultPilot.</h1>
+                <p class="text-muted small">AI-Powered Financial Autopilot</p>
+            </div>
+            
+            <div class="mb-3 text-start">
+                <label class="form-label text-muted small fw-bold">USERNAME</label>
+                <input type="text" id="username-input" class="form-control bg-transparent text-white border-primary border-opacity-25 shadow-none" placeholder="Enter your username">
+            </div>
+            <div class="mb-4 text-start">
+                <label class="form-label text-muted small fw-bold">PASSWORD</label>
+                <input type="password" id="password-input" class="form-control bg-transparent text-white border-primary border-opacity-25 shadow-none" placeholder="••••••••">
+            </div>
+            
+            <button id="login-btn" class="btn btn-primary btn-modern w-100 py-2 fs-5">Secure Login</button>
+            <p class="text-muted small mt-3 mb-0">New username? We will auto-create your profile.</p>
+            
+            <p id="login-error" class="text-danger small mt-2 fw-bold d-none">❌ Error message here.</p>
+        </div>
+    </div>
+
+    <div id="app-view" class="container mt-5 position-relative z-1 d-none">
+        <header class="mb-4 d-flex justify-content-between align-items-center">
             <div>
                 <h1 class="display-4 fw-bolder text-primary tracking-tight mb-0">VaultPilot.</h1>
-                <p class="lead text-muted mt-1 fw-light">AI-Powered Financial Autopilot</p>
+                <p class="lead text-muted mt-1 fw-light d-flex align-items-center gap-2">
+                    Welcome back, <span id="display-username" class="fw-bold text-white">User</span> 
+                    <button id="logout-btn" class="btn btn-sm btn-outline-danger ms-3" style="border-radius: 8px;">Logout</button>
+                </p>
             </div>
             <button class="btn border-0 shadow-none p-2" id="dark-mode-toggle" title="Toggle Dark Mode" style="font-size: 1.5rem; background: transparent;">
                 ☀️
             </button>
         </header>
 
+        <div class="d-flex justify-content-between align-items-center mb-4 p-3 glass-card" style="border-radius: 12px; padding: 0.75rem 1.5rem !important;">
+            <span class="text-muted fw-bold small tracking-wide m-0 d-flex align-items-center gap-2">
+                <span class="pulse-dot" style="width: 8px; height: 8px;"></span> LIVE DEFI MARKET
+            </span>
+            <div id="crypto-ticker" class="d-flex gap-3 gap-md-4 fw-bold small overflow-hidden text-nowrap">
+                <span class="text-muted">Establishing secure API connection...</span>
+            </div>
+        </div>
+
         <div class="row g-4">
             <div class="col-md-7">
                 
                 <div class="card glass-card mb-4 position-relative overflow-hidden">
-                    
-                    <div id="wallet-overlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center z-2 glass-overlay">
-                        <button class="btn btn-primary btn-modern px-5 py-3 fs-5 shadow-lg" id="connect-wallet-btn">
-                            Connect Wallet
-                        </button>
-                    </div>
-
-                    <div class="card-body p-5 blurred-state" id="app-content">
+                    <div class="card-body p-5" id="app-content">
                         <h6 class="text-uppercase text-muted fw-bold tracking-wide mb-3">Total Balance</h6>
                         <h2 class="display-4 fw-bolder mb-1" id="total-balance">₹0.00</h2>
                         <p class="text-success fw-bold mb-4" id="growth-rate">+0.00% simulated APY</p>
@@ -43,11 +71,11 @@
                         <div class="d-flex gap-3 mt-4 flex-wrap">
                             <div class="input-group shadow-sm" style="max-width: 240px;">
                                 <span class="input-group-text bg-transparent border-primary border-opacity-25 text-primary fw-bold">₹</span>
-                                <input type="number" class="form-control bg-transparent text-white border-primary border-opacity-25 shadow-none fw-semibold" id="deposit-amount" placeholder="1000" value="1000" min="1" disabled>
-                                <button class="btn btn-primary btn-modern px-3" id="deposit-btn" disabled>Deposit</button>
+                                <input type="number" class="form-control bg-transparent text-white border-primary border-opacity-25 shadow-none fw-semibold" id="deposit-amount" placeholder="1000" value="1000" min="1">
+                                <button class="btn btn-primary btn-modern px-3" id="deposit-btn">Deposit</button>
                             </div>
                             
-                            <button class="btn btn-outline-danger btn-modern px-4 py-2" id="risk-btn" disabled>Simulate Risk ⚠️</button>
+                            <button class="btn btn-outline-danger btn-modern px-4 py-2" id="risk-btn">Simulate Risk ⚠️</button>
                         </div>
                     </div>
                 </div>
@@ -57,9 +85,8 @@
                         <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
                             <span class="pulse-dot"></span> AI Activity Engine
                         </h6>
-                        <div id="ai-logs" class="p-4 rounded-3" style="height: 200px; overflow-y: auto;">
-                            <p class="mb-2">> Awaiting wallet connection...</p>
-                        </div>
+                        <div id="ai-logs" class="p-4 rounded-3 transaction-scroll" style="height: 200px;">
+                            </div>
                     </div>
                 </div>
 
@@ -76,10 +103,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tx-body">
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted py-3 small">No recent transactions</td>
-                                    </tr>
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
@@ -89,11 +113,29 @@
 
             <div class="col-md-5">
                 <div class="card glass-card h-100">
-                    <div class="card-body p-5 d-flex flex-column align-items-center justify-content-center">
-                        <h6 class="text-uppercase text-muted fw-bold tracking-wide mb-4 w-100 text-start">Live Allocation</h6>
-                        <div class="chart-container w-100 position-relative" style="filter: blur(5px); opacity: 0.5; transition: 0.5s ease;" id="chart-overlay">
-                            <canvas id="portfolioChart" style="max-height: 280px;"></canvas>
+                    <div class="card-body p-5 d-flex flex-column">
+                        
+                        <div class="d-flex justify-content-between align-items-center w-100 mb-4">
+                            <div class="nav nav-pills custom-tabs" role="tablist">
+                                <button class="nav-link active py-1 px-3 small" id="tab-allocation" type="button" role="tab">Allocation</button>
+                                <button class="nav-link py-1 px-3 small" id="tab-performance" type="button" role="tab">Performance</button>
+                            </div>
+                            <span id="strategy-badge" class="badge bg-primary bg-opacity-25 text-primary">Balanced</span>
                         </div>
+
+                        <div class="w-100 mb-5 px-2">
+                            <label class="form-label text-muted small fw-bold d-flex justify-content-between mb-2">
+                                <span>Safe</span>
+                                <span>Degen</span>
+                            </label>
+                            <input type="range" class="form-range custom-range" min="1" max="3" step="1" id="strategy-slider" value="2" disabled>
+                        </div>
+
+                        <div class="chart-container w-100 flex-grow-1 d-flex align-items-center justify-content-center position-relative" id="chart-overlay">
+                            <canvas id="portfolioChart" class="chart-layer" style="max-height: 320px; width: 100%; opacity: 1; z-index: 2; transition: opacity 0.4s ease;"></canvas>
+                            <canvas id="performanceChart" class="chart-layer" style="max-height: 320px; width: 100%; position: absolute; opacity: 0; z-index: 1; pointer-events: none; transition: opacity 0.4s ease;"></canvas>
+                        </div>
+
                     </div>
                 </div>
             </div>
